@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: browser-task
+server:
+  port: 7171
+  servlet:
+    context-path: /browser-task
