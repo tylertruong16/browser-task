@@ -1,5 +1,6 @@
 package com.task.service;
 
+import com.task.model.BrowserTask;
 import lombok.extern.java.Log;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -19,7 +20,9 @@ import java.util.logging.Level;
 @Log
 public class ChromeService {
 
-
+    public void handleBrowserTask(BrowserTask data) {
+        accessGoogle(data.getEmail());
+    }
 
     public void accessGoogle(String email) {
         var url = "https://www.google.com";
