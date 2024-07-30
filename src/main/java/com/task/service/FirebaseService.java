@@ -9,9 +9,9 @@ import com.task.common.JsonConverter;
 import com.task.common.ServerUtil;
 import com.task.model.ActionStep;
 import com.task.model.BrowserTask;
-import com.task.model.TaskStatus;
 import lombok.Getter;
 import lombok.extern.java.Log;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +19,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -53,14 +54,14 @@ public class FirebaseService {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    // Email exists, update status
-                    log.log(Level.INFO, "browser-task >> email exists >> update status >> email: {0}", browserTask.getTaskId());
-                    taskIdRef.child("status").setValueAsync(browserTask.getStatus());
+                    // taskId exists, update status
+                    log.log(Level.INFO, "browser-task >> taskId exists >> update status >> taskId: {0}", browserTask.getTaskId());
                     taskIdRef.child("updateAt").setValueAsync(browserTask.getUpdateAt());
                     taskIdRef.child("processStep").setValueAsync(browserTask.getProcessStep());
+                    taskIdRef.child("currentProfiles").setValueAsync(browserTask.getCurrentProfiles());
                 } else {
-                    // Email does not exist, save new task
-                    log.log(Level.INFO, "browser-task >> save task >> email: {0}", browserTask.getTaskId());
+                    // taskId does not exist, save new task
+                    log.log(Level.INFO, "browser-task >> save task >> taskId: {0}", browserTask.getTaskId());
                     databaseReference.child(browserTask.getTaskId()).setValueAsync(browserTask);
                 }
             }
@@ -88,7 +89,7 @@ public class FirebaseService {
         var firebaseDatabase = FirebaseDatabase.getInstance();
         this.databaseReference = firebaseDatabase.getReference(firebaseCollectionName);
         var taskId = Generators.timeBasedEpochGenerator().generate().toString();
-        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), TaskStatus.NEW.toString(), ActionStep.APP_STARTED.name(), ServerUtil.getServerIP());
+        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), ActionStep.APP_STARTED.name(), ServerUtil.getServerIP(), ServerUtil.getAllFolderNames());
         saveBrowserTask(initTask);
         subscribeToChanges();
         CompletableFuture.runAsync(() -> {
@@ -126,11 +127,16 @@ public class FirebaseService {
     }
 
     public void handleBrowserTask(BrowserTask browserTask) {
+        var result = new ArrayList<BrowserTask>();
         try {
-            chromeService.handleBrowserTask(browserTask);
+            var response = chromeService.handleBrowserTask(browserTask);
+            Optional.ofNullable(response.getResponse()).ifPresent(result::add);
         } catch (Exception e) {
             log.log(Level.WARNING, "browser-task >> handleBrowserTask >> Exception:", e);
         } finally {
+            if (CollectionUtils.isNotEmpty(result)) {
+                saveBrowserTask(result.getFirst());
+            }
 
         }
     }
