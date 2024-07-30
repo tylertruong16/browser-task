@@ -1,5 +1,5 @@
 package com.task.model;
 
 public enum TaskStatus {
-    NEW, DONE
+    FAILED, SUCCESS, NEW
 }

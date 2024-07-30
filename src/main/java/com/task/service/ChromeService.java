@@ -21,12 +21,15 @@ import java.util.logging.Level;
 public class ChromeService {
 
     public void handleBrowserTask(BrowserTask data) {
-        accessGoogle(data.getEmail());
+        accessGoogle(data);
     }
 
-    public void accessGoogle(String email) {
+    public void accessGoogle(BrowserTask task) {
+        if (task.canNotStartBrowser()) {
+            return;
+        }
         var url = "https://www.google.com";
-        var options = createProfile(email, new ChromeOptions());
+        var options = createProfile(task.getTaskId(), new ChromeOptions());
         var driver = new ChromeDriver(options);
         try {
 

@@ -1,10 +1,13 @@
 package com.task.service;
 
+import com.fasterxml.uuid.Generators;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.*;
 import com.task.common.JsonConverter;
+import com.task.common.ServerUtil;
+import com.task.model.ActionStep;
 import com.task.model.BrowserTask;
 import com.task.model.TaskStatus;
 import lombok.Getter;
@@ -45,20 +48,20 @@ public class FirebaseService {
 
 
     public void saveBrowserTask(BrowserTask browserTask) {
-        var emailRef = databaseReference.child(browserTask.convertToPrimaryKey());
-        emailRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        var taskIdRef = databaseReference.child(browserTask.getTaskId());
+        taskIdRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     // Email exists, update status
-                    log.log(Level.INFO, "browser-task >> email exists >> update status >> email: {0}", browserTask.getEmail());
-                    emailRef.child("status").setValueAsync(browserTask.getStatus());
-                    emailRef.child("updateAt").setValueAsync(browserTask.getUpdateAt());
+                    log.log(Level.INFO, "browser-task >> email exists >> update status >> email: {0}", browserTask.getTaskId());
+                    taskIdRef.child("status").setValueAsync(browserTask.getStatus());
+                    taskIdRef.child("updateAt").setValueAsync(browserTask.getUpdateAt());
+                    taskIdRef.child("processStep").setValueAsync(browserTask.getProcessStep());
                 } else {
                     // Email does not exist, save new task
-                    log.log(Level.INFO, "browser-task >> save task >> email: {0}", browserTask.getEmail());
-                    var key = browserTask.convertToPrimaryKey(); // Generate a unique key for the new task
-                    databaseReference.child(key).setValueAsync(browserTask);
+                    log.log(Level.INFO, "browser-task >> save task >> email: {0}", browserTask.getTaskId());
+                    databaseReference.child(browserTask.getTaskId()).setValueAsync(browserTask);
                 }
             }
 
@@ -84,8 +87,10 @@ public class FirebaseService {
         }
         var firebaseDatabase = FirebaseDatabase.getInstance();
         this.databaseReference = firebaseDatabase.getReference(firebaseCollectionName);
+        var taskId = Generators.timeBasedEpochGenerator().generate().toString();
+        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), TaskStatus.NEW.toString(), ActionStep.APP_STARTED.name(), ServerUtil.getServerIP());
+        saveBrowserTask(initTask);
         subscribeToChanges();
-
         CompletableFuture.runAsync(() -> {
             try {
                 while (alive) {
@@ -126,8 +131,7 @@ public class FirebaseService {
         } catch (Exception e) {
             log.log(Level.WARNING, "browser-task >> handleBrowserTask >> Exception:", e);
         } finally {
-            var taskDone = new BrowserTask(browserTask.getEmail(), System.currentTimeMillis(), TaskStatus.DONE.name());
-            this.saveBrowserTask(taskDone);
+
         }
     }
 
