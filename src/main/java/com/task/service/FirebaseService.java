@@ -168,6 +168,7 @@ public class FirebaseService {
     @PreDestroy
     void destroy() {
         this.alive = false;
+        removeRecordByServerIp(CommonUtil.getServerIP());
     }
 
 

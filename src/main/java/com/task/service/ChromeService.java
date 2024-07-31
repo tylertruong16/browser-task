@@ -103,7 +103,10 @@ public class ChromeService {
             options.addArguments(MessageFormat.format("user-data-dir={0}", profilePath));
             options.addArguments("--disable-web-security");
             // this option so important to bypass google detection
-            options.addArguments("--disable-blink-features=AutomationControlled");
+            options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
+            options.setExperimentalOption("useAutomationExtension", false);
+            options.addArguments("disable-infobars");
+            options.addArguments("--start-fullscreen");
             options.setExperimentalOption("useAutomationExtension", false);
 
             return options;
