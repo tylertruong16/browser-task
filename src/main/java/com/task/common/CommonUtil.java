@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 @UtilityClass
 @Log
-public class ServerUtil {
+public class CommonUtil {
 
     public String getServerIP() {
         try {
@@ -41,6 +41,35 @@ public class ServerUtil {
                     .collect(Collectors.toList());
         }
         return Collections.emptyList();
+    }
+
+    public static boolean renameFolder(String oldFolderName, String newFolderName) {
+        var baseDirectoryPath = System.getProperty("user.home") + File.separator + "chrome-profiles";
+        var oldFolder = new File(baseDirectoryPath + File.separator + oldFolderName);
+        var newFolder = new File(baseDirectoryPath + File.separator + newFolderName);
+        // Rename the folder
+        return oldFolder.renameTo(newFolder);
+    }
+
+
+    public static boolean deleteFolder(File folder) {
+        if (folder.isDirectory()) {
+            var files = folder.listFiles();
+            if (files != null) {
+                for (var file : files) {
+                    // Recursive call to delete files and subfolders
+                    deleteFolder(file);
+                }
+            }
+        }
+        // Delete the file or empty folder
+        return folder.delete();
+    }
+
+    public static boolean deleteFolderByName(String folderName) {
+        var baseDirectoryPath = System.getProperty("user.home") + File.separator + "chrome-profiles";
+        var folder = new File(baseDirectoryPath + File.separator + folderName);
+        return deleteFolder(folder);
     }
 
 }

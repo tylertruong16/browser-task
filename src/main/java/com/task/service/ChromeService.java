@@ -1,10 +1,12 @@
 package com.task.service;
 
+import com.task.common.CommonUtil;
 import com.task.model.ActionStep;
 import com.task.model.BrowserTask;
 import com.task.model.TaskResult;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
@@ -16,8 +18,10 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.Duration;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 @Service
 @Log
@@ -28,13 +32,14 @@ public class ChromeService {
     }
 
     public TaskResult accessGoogle(BrowserTask task) {
+        var folderName = UUID.randomUUID().toString();
         var result = new TaskResult(task, null);
         var cloneResult = SerializationUtils.clone(task);
         if (task.canNotStartBrowser()) {
             return result;
         }
         var url = "https://www.google.com";
-        var options = createProfile(task.getTaskId(), new ChromeOptions());
+        var options = createProfile(folderName, new ChromeOptions());
         var driver = new ChromeDriver(options);
         try {
 
@@ -62,14 +67,22 @@ public class ChromeService {
 
             if (isSignedIn) {
                 log.log(Level.INFO, "browser-task >> ChromeService >> accessGoogle >> Google account is already logged in.");
+                var email = StringUtils.defaultIfBlank(findEmail(driver), "").trim();
+                if (StringUtils.isBlank(email)) {
+                    throw new IllegalArgumentException("can not extract email");
+                }
+                log.log(Level.INFO, "browser-task >> ChromeService >> accessGoogle >> email: {0}", email);
+                CommonUtil.renameFolder(folderName, email);
                 cloneResult.setProcessStep(ActionStep.LOGIN_SUCCESS.name());
             } else {
                 log.log(Level.SEVERE, "browser-task >> ChromeService >> accessGoogle >> No Google account is logged in.");
                 cloneResult.setProcessStep(ActionStep.LOGIN_FAILURE.name());
+                CommonUtil.deleteFolderByName(folderName);
             }
         } catch (Exception e) {
             log.log(Level.WARNING, "browser-task >> ChromeService >> accessGoogle >> Exception:", e);
             cloneResult.setProcessStep(ActionStep.LOGIN_FAILURE.name());
+            CommonUtil.deleteFolderByName(folderName);
         } finally {
             driver.quit();
         }
@@ -92,5 +105,18 @@ public class ChromeService {
         }
         return options;
     }
+
+
+    public String findEmail(ChromeDriver driver) {
+        var input = driver.findElement(By.xpath("//a[contains(@href, 'accounts.google.com/SignOutOptions')]")).getAttribute("aria-label");
+        var emailPattern = "([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6})";
+        var pattern = Pattern.compile(emailPattern);
+        var matcher = pattern.matcher(input);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
+    }
+
 
 }

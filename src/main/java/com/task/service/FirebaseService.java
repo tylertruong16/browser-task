@@ -5,13 +5,14 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.*;
+import com.task.common.CommonUtil;
 import com.task.common.JsonConverter;
-import com.task.common.ServerUtil;
 import com.task.model.ActionStep;
 import com.task.model.BrowserTask;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -61,6 +62,7 @@ public class FirebaseService {
                     taskIdRef.child("currentProfiles").setValueAsync(browserTask.getCurrentProfiles());
                 } else {
                     // taskId does not exist, save new task
+                    removeRecordByServerIp(browserTask.getServerIp());
                     log.log(Level.INFO, "browser-task >> save task >> taskId: {0}", browserTask.getTaskId());
                     databaseReference.child(browserTask.getTaskId()).setValueAsync(browserTask);
                 }
@@ -69,6 +71,24 @@ public class FirebaseService {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 log.log(Level.WARNING, "browser-task >> FirebaseService >> saveBrowserTask >> onCancelled >> Exception:", databaseError.toException());
+            }
+        });
+    }
+
+    public void removeRecordByServerIp(String serverIp) {
+        Query query = databaseReference.orderByChild("serverIp").equalTo(serverIp);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    snapshot.getRef().removeValueAsync();
+                }
+                log.log(Level.INFO, "browser-task >> FirebaseService >> removeRecordByServerIp >> Record(s) with serverIp: {0} >> removed successfully", serverIp);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                log.log(Level.WARNING, "browser-task >> FirebaseService >> removeRecordByServerIp >> onCancelled >> Exception:", databaseError.toException());
             }
         });
     }
@@ -89,7 +109,7 @@ public class FirebaseService {
         var firebaseDatabase = FirebaseDatabase.getInstance();
         this.databaseReference = firebaseDatabase.getReference(firebaseCollectionName);
         var taskId = Generators.timeBasedEpochGenerator().generate().toString();
-        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), ActionStep.APP_STARTED.name(), ServerUtil.getServerIP(), ServerUtil.getAllFolderNames());
+        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), ActionStep.APP_STARTED.name(), CommonUtil.getServerIP(), CommonUtil.getAllFolderNames());
         saveBrowserTask(initTask);
         subscribeToChanges();
         CompletableFuture.runAsync(() -> {
@@ -111,7 +131,7 @@ public class FirebaseService {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     var task = Optional.ofNullable(ds.getValue(BrowserTask.class)).orElse(new BrowserTask());
-                    if (task.newTask()) {
+                    if (task.newTask() && StringUtils.equalsIgnoreCase(task.getServerIp(), CommonUtil.getServerIP())) {
                         // push to handle task
                         log.log(Level.INFO, "browser-task >> FirebaseService >> task: {0}", JsonConverter.convertObjectToJson(task));
                         queue.add(task);
@@ -135,7 +155,10 @@ public class FirebaseService {
             log.log(Level.WARNING, "browser-task >> handleBrowserTask >> Exception:", e);
         } finally {
             if (CollectionUtils.isNotEmpty(result)) {
-                saveBrowserTask(result.getFirst());
+                var first = result.getFirst();
+                first.setProcessStep(ActionStep.APP_STARTED.name());
+                first.setCurrentProfiles(CommonUtil.getAllFolderNames());
+                saveBrowserTask(first);
             }
 
         }
