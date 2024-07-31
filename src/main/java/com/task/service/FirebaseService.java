@@ -59,6 +59,7 @@ public class FirebaseService {
                     log.log(Level.INFO, "browser-task >> taskId exists >> update status >> taskId: {0}", browserTask.getTaskId());
                     taskIdRef.child("updateAt").setValueAsync(browserTask.getUpdateAt());
                     taskIdRef.child("processStep").setValueAsync(browserTask.getProcessStep());
+                    taskIdRef.child("stepHistory").setValueAsync(browserTask.getStepHistory());
                     taskIdRef.child("currentProfiles").setValueAsync(browserTask.getCurrentProfiles());
                 } else {
                     // taskId does not exist, save new task
@@ -109,7 +110,7 @@ public class FirebaseService {
         var firebaseDatabase = FirebaseDatabase.getInstance();
         this.databaseReference = firebaseDatabase.getReference(firebaseCollectionName);
         var taskId = Generators.timeBasedEpochGenerator().generate().toString();
-        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), ActionStep.APP_STARTED.name(), CommonUtil.getServerIP(), CommonUtil.getAllFolderNames());
+        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), ActionStep.APP_STARTED.name(), CommonUtil.getServerIP(), CommonUtil.getAllFolderNames(), new ArrayList<>());
         saveBrowserTask(initTask);
         subscribeToChanges();
         CompletableFuture.runAsync(() -> {

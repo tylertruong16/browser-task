@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -35,9 +36,11 @@ public class ChromeService {
         var folderName = UUID.randomUUID().toString();
         var result = new TaskResult(task, null);
         var cloneResult = SerializationUtils.clone(task);
+        var stepHistory = new ArrayList<String>();
         if (task.canNotStartBrowser()) {
             return result;
         }
+        stepHistory.add(ActionStep.CONNECT_GOOGLE.name());
         var url = "https://www.google.com";
         var options = createProfile(folderName, new ChromeOptions());
         var driver = new ChromeDriver(options);
@@ -74,18 +77,22 @@ public class ChromeService {
                 log.log(Level.INFO, "browser-task >> ChromeService >> accessGoogle >> email: {0}", email);
                 CommonUtil.renameFolder(folderName, email);
                 cloneResult.setProcessStep(ActionStep.LOGIN_SUCCESS.name());
+                stepHistory.add(ActionStep.LOGIN_SUCCESS.name());
             } else {
                 log.log(Level.SEVERE, "browser-task >> ChromeService >> accessGoogle >> No Google account is logged in.");
                 cloneResult.setProcessStep(ActionStep.LOGIN_FAILURE.name());
+                stepHistory.add(ActionStep.LOGIN_FAILURE.name());
                 CommonUtil.deleteFolderByName(folderName);
             }
         } catch (Exception e) {
             log.log(Level.WARNING, "browser-task >> ChromeService >> accessGoogle >> Exception:", e);
             cloneResult.setProcessStep(ActionStep.LOGIN_FAILURE.name());
+            stepHistory.add(ActionStep.LOGIN_FAILURE.name());
             CommonUtil.deleteFolderByName(folderName);
         } finally {
             driver.quit();
         }
+        cloneResult.setStepHistory(stepHistory);
         result.setResponse(cloneResult);
         return result;
     }

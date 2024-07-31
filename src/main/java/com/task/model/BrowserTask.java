@@ -19,6 +19,7 @@ public class BrowserTask implements Serializable {
     private String processStep = ActionStep.APP_STARTED.name();
     private String serverIp = "";
     private List<String> currentProfiles = new ArrayList<>();
+    private List<String> stepHistory = new ArrayList<>();
 
     public boolean newTask() {
         return Stream.of(ActionStep.APP_STARTED, ActionStep.CONNECT_GOOGLE, ActionStep.ERROR)
