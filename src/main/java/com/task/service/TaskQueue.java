@@ -88,7 +88,6 @@ public class TaskQueue {
         } finally {
             if (CollectionUtils.isNotEmpty(result)) {
                 var first = result.getFirst();
-                first.setProcessStep(ActionStep.APP_STARTED.name());
                 firebaseService.saveBrowserTask(first);
             }
 

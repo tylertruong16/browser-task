@@ -61,10 +61,7 @@ public class ChromeService {
             var robot = new Robot();
             robot.keyPress(KeyEvent.VK_F11);
 
-            var script = "document.addEventListener('keydown', function(event) { if(event.altKey) { event.preventDefault(); } });";
-            // Execute the JavaScript
-            var jsExecutor = (JavascriptExecutor) driver;
-            jsExecutor.executeScript(script);
+            preventCloseTab(driver);
 
             // check app can connect to login page by track the id identifierId
 
@@ -95,7 +92,8 @@ public class ChromeService {
             driver.quit();
             // we can only rename the profile folder when we already closed the browser.
             if (cloneResult.getProcessStep().equalsIgnoreCase(ActionStep.LOGIN_SUCCESS.name()) && StringUtils.isNoneBlank(email)) {
-                var removeTheFolder = CommonUtil.renameFolder(folderName, email);
+                CommonUtil.renameFolder(folderName, email);
+                firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.UPDATED_THE_PROFILE_FOLDER.name());
             } else {
                 CommonUtil.deleteFolderByName(folderName);
             }
@@ -142,6 +140,37 @@ public class ChromeService {
             }
         };
         return wait.until(checkLogin);
+    }
+
+    public void preventCloseTab(ChromeDriver driver) {
+        var script = """
+                    document.addEventListener('keydown', function(event) {
+                        // Prevent opening a new tab with Ctrl+T or Ctrl+N
+                        if ((event.ctrlKey && (event.key === 't' || event.key === 'n')) ||
+                            // Prevent closing the current tab with Ctrl+W or Ctrl+F4
+                            (event.ctrlKey && (event.key === 'w' || event.key === 'F4')) ||
+                            // Prevent opening a new window with Ctrl+N
+                            (event.ctrlKey && event.key === 'N') ||
+                            // Prevent opening a new incognito window with Ctrl+Shift+N
+                            (event.ctrlKey && event.shiftKey && event.key === 'N') ||
+                            // Prevent closing the window with Alt+F4
+                            (event.altKey && event.key === 'F4') ||
+                            // Prevent switching between windows with Alt+Tab
+                            (event.altKey && event.key === 'Tab') ||
+                            // Prevent opening the system menu with F10
+                            (event.key === 'F10') ||
+                            // Prevent opening the context menu with Shift+F10
+                            (event.shiftKey && event.key === 'F10') ||
+                            // Prevent closing or minimizing the window with Ctrl+F4
+                            (event.ctrlKey && event.key === 'F4') ||
+                            // Prevent reopening the most recently closed tab with Ctrl+Shift+T
+                            (event.ctrlKey && event.shiftKey && event.key === 'T')) {
+                            event.preventDefault();
+                        }
+                    });
+                """;
+        var jsExecutor = (JavascriptExecutor) driver;
+        jsExecutor.executeScript(script);
     }
 
     public ChromeOptions createProfile(String folderName, ChromeOptions options) {
