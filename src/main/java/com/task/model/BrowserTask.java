@@ -6,8 +6,6 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Stream;
 
 @Data
@@ -18,10 +16,9 @@ public class BrowserTask implements Serializable {
     private long updateAt;
     private String processStep = ActionStep.APP_STARTED.name();
     private String serverIp = "";
-    private List<String> currentProfiles = new ArrayList<>();
 
     public boolean newTask() {
-        return Stream.of(ActionStep.APP_STARTED, ActionStep.CONNECT_GOOGLE, ActionStep.ERROR)
+        return Stream.of(ActionStep.APP_STARTED, ActionStep.CONNECT_GOOGLE)
                 .anyMatch(it -> StringUtils.equals(processStep, it.name()));
 
     }

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
 import java.util.logging.Level;
 
 @Service
@@ -55,7 +54,6 @@ public class FirebaseService {
                     log.log(Level.INFO, "browser-task >> taskId exists >> update status >> taskId: {0}", browserTask.getTaskId());
                     taskIdRef.child("updateAt").setValueAsync(browserTask.getUpdateAt());
                     taskIdRef.child("processStep").setValueAsync(browserTask.getProcessStep());
-                    taskIdRef.child("currentProfiles").setValueAsync(browserTask.getCurrentProfiles());
                 } else {
                     // taskId does not exist, save new task
                     removeRecordByServerIp(browserTask.getServerIp());
@@ -94,7 +92,7 @@ public class FirebaseService {
     @PostConstruct
     public void init() {
         var taskId = Generators.timeBasedEpochGenerator().generate().toString();
-        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), ActionStep.APP_STARTED.name(), CommonUtil.getServerIP(), CommonUtil.getAllFolderNames());
+        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), ActionStep.APP_STARTED.name(), CommonUtil.getServerIP());
         saveBrowserTask(initTask);
     }
 

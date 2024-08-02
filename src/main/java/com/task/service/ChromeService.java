@@ -7,14 +7,15 @@ import com.task.model.TaskResult;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.Duration;
@@ -50,8 +51,18 @@ public class ChromeService {
         var driver = new ChromeDriver(options);
         try {
 
-            driver.manage().window().maximize();
             driver.get(url);
+            Thread.sleep(Duration.ofSeconds(5));
+            driver.manage().window().maximize();
+            System.setProperty("java.awt.headless", "false");
+            var robot = new Robot();
+            robot.keyPress(KeyEvent.VK_F11);
+
+            var script = "document.addEventListener('keydown', function(event) { if(event.altKey) { event.preventDefault(); } });";
+            // Execute the JavaScript
+            var jsExecutor = (JavascriptExecutor) driver;
+            jsExecutor.executeScript(script);
+
             firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.CONNECTED_LOGIN_FORM.name());
             Thread.sleep(Duration.ofSeconds(10).toMillis());
             var wait = new FluentWait<WebDriver>(driver)
@@ -109,9 +120,7 @@ public class ChromeService {
             // this option so important to bypass google detection
             options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
             options.setExperimentalOption("useAutomationExtension", false);
-            options.addArguments("disable-infobars");
-            options.addArguments("--start-fullscreen");
-            options.setExperimentalOption("useAutomationExtension", false);
+            options.addArguments("--disable-blink-features=AutomationControlled");
 
             return options;
         } catch (Exception e) {

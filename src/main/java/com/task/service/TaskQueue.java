@@ -90,7 +90,6 @@ public class TaskQueue {
             if (CollectionUtils.isNotEmpty(result)) {
                 var first = result.getFirst();
                 first.setProcessStep(ActionStep.APP_STARTED.name());
-                first.setCurrentProfiles(CommonUtil.getAllFolderNames());
                 firebaseService.saveBrowserTask(first);
             }
 
