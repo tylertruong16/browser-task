@@ -30,8 +30,7 @@ public class FirebaseService {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     // taskId exists, update status
-                    log.log(Level.INFO, "browser-task >> updateTaskStatus >> update status >> taskId: {0}", taskId);
-                    taskIdRef.child("updateAt").setValueAsync(System.currentTimeMillis());
+                    log.log(Level.INFO, "browser-task >> updateTaskStatus >> update status >> taskId: {0} >> newStatus >> {1}", new Object[]{taskId, status});
                     taskIdRef.child("processStep").setValueAsync(status);
                 }
             }
@@ -51,8 +50,7 @@ public class FirebaseService {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     // taskId exists, update status
-                    log.log(Level.INFO, "browser-task >> taskId exists >> update status >> taskId: {0}", browserTask.getTaskId());
-                    taskIdRef.child("updateAt").setValueAsync(browserTask.getUpdateAt());
+                    log.log(Level.INFO, "browser-task >> taskId exists >> update status >> taskId: {0} >> status: {1}", new Object[]{browserTask.getTaskId(), browserTask.getProcessStep()});
                     taskIdRef.child("processStep").setValueAsync(browserTask.getProcessStep());
                 } else {
                     // taskId does not exist, save new task
@@ -92,7 +90,7 @@ public class FirebaseService {
     @PostConstruct
     public void init() {
         var taskId = Generators.timeBasedEpochGenerator().generate().toString();
-        var initTask = new BrowserTask(taskId, System.currentTimeMillis(), ActionStep.APP_STARTED.name(), CommonUtil.getServerIP());
+        var initTask = new BrowserTask(taskId, ActionStep.APP_STARTED.name(), CommonUtil.getServerIP());
         saveBrowserTask(initTask);
     }
 

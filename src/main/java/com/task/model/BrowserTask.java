@@ -12,8 +12,8 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BrowserTask implements Serializable {
+
     private String taskId;
-    private long updateAt;
     private String processStep = ActionStep.APP_STARTED.name();
     private String serverIp = "";
 

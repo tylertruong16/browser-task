@@ -13,7 +13,6 @@ import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
@@ -44,7 +43,7 @@ public class TaskQueue {
     }
 
     @PostConstruct
-    void init(){
+    void init() {
         CompletableFuture.runAsync(() -> {
             try {
                 while (alive) {

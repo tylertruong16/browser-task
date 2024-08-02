@@ -25,7 +25,7 @@ public class CommonUtil {
                     .filter(ip -> ip.isSiteLocalAddress() && !ip.isLoopbackAddress() && !ip.isLinkLocalAddress() && !ip.getHostAddress().contains(":"))
                     .findFirst().map(InetAddress::getHostAddress).orElseThrow(() -> new RuntimeException("Cannot determine server IP address"));
         } catch (IOException ex) {
-            log.log(Level.SEVERE, "browser-task >> ServerUtil >> getServerIP >> Cannot determine server IP address", ex);
+            log.log(Level.SEVERE, "browser-task >> CommonUtil >> getServerIP >> Cannot determine server IP address", ex);
             return "";
         }
     }
@@ -48,7 +48,11 @@ public class CommonUtil {
         var oldFolder = new File(baseDirectoryPath + File.separator + oldFolderName);
         var newFolder = new File(baseDirectoryPath + File.separator + newFolderName);
         // Rename the folder
-        return oldFolder.renameTo(newFolder);
+        var success = oldFolder.renameTo(newFolder);
+        if (!success) {
+            log.log(Level.SEVERE, "browser-task >> CommonUtil >> can not rename the folder from: {0} >> to: {1}", new Object[]{oldFolder.getAbsolutePath(), newFolder.getAbsolutePath()});
+        }
+        return success;
     }
 
 
