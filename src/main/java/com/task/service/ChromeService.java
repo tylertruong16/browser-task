@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -28,6 +27,13 @@ import java.util.regex.Pattern;
 @Log
 public class ChromeService {
 
+
+    final FirebaseService firebaseService;
+
+    public ChromeService(FirebaseService firebaseService) {
+        this.firebaseService = firebaseService;
+    }
+
     public TaskResult handleBrowserTask(BrowserTask data) {
         return accessGoogle(data);
     }
@@ -36,18 +42,17 @@ public class ChromeService {
         var folderName = UUID.randomUUID().toString();
         var result = new TaskResult(task, null);
         var cloneResult = SerializationUtils.clone(task);
-        var stepHistory = new ArrayList<String>();
         if (task.canNotStartBrowser()) {
             return result;
         }
-        stepHistory.add(ActionStep.CONNECT_GOOGLE.name());
-        var url = "https://www.google.com";
+        var url = "https://accounts.google.com";
         var options = createProfile(folderName, new ChromeOptions());
         var driver = new ChromeDriver(options);
         try {
 
             driver.manage().window().maximize();
             driver.get(url);
+            firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.CONNECTED_LOGIN_FORM.name());
             Thread.sleep(Duration.ofSeconds(10).toMillis());
             var wait = new FluentWait<WebDriver>(driver)
                     .withTimeout(Duration.ofMinutes(5))
@@ -76,23 +81,22 @@ public class ChromeService {
                 }
                 log.log(Level.INFO, "browser-task >> ChromeService >> accessGoogle >> email: {0}", email);
                 CommonUtil.renameFolder(folderName, email);
+                firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_SUCCESS.name());
                 cloneResult.setProcessStep(ActionStep.LOGIN_SUCCESS.name());
-                stepHistory.add(ActionStep.LOGIN_SUCCESS.name());
             } else {
                 log.log(Level.SEVERE, "browser-task >> ChromeService >> accessGoogle >> No Google account is logged in.");
                 cloneResult.setProcessStep(ActionStep.LOGIN_FAILURE.name());
-                stepHistory.add(ActionStep.LOGIN_FAILURE.name());
+                firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_FAILURE.name());
                 CommonUtil.deleteFolderByName(folderName);
             }
         } catch (Exception e) {
             log.log(Level.WARNING, "browser-task >> ChromeService >> accessGoogle >> Exception:", e);
             cloneResult.setProcessStep(ActionStep.LOGIN_FAILURE.name());
-            stepHistory.add(ActionStep.LOGIN_FAILURE.name());
+            firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_FAILURE.name());
             CommonUtil.deleteFolderByName(folderName);
         } finally {
             driver.quit();
         }
-        cloneResult.setStepHistory(stepHistory);
         result.setResponse(cloneResult);
         return result;
     }
