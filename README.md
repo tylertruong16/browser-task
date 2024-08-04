@@ -2,10 +2,26 @@
 
 ## Requirements
 
-- **Java**: 21
+- **Java**: 22
 - **Server**: Must have Chrome installed
-- **Firebase**: Create a secret with the name `google-services.json` and place it under `src/main/resources/google-services.json`
-- **Database Configuration**: Set up the database URL in the `application.yml` file.
+
+# Configuration Instructions
+
+- `CONFIG_URL` :You must provide the URL to load the Firebase configuration through the environment variable.
+- `REALM` : The header included is configured through the environment variable.
+- `VIRTUAL_URL`: The virtual URL is loaded through the environment variable
+## JSON Response Format
+
+```json 
+{
+  "id": "xxx",
+  "firebaseConfig": { 
+    
+  },
+  "firebaseUrl": "your firebase database URL"
+} 
+```
+
 
 ## Example Usage
 

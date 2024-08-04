@@ -28,3 +28,4 @@ replay_pid*
 *.iml
 *.ipr
 /target/
+/src/main/resources/google-services.json
