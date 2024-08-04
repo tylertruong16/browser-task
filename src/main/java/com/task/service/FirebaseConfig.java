@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 @Configuration
 @Log
@@ -52,7 +51,7 @@ public class FirebaseConfig {
     public static FileInputStream convertJsonStringToFileInputStream(String jsonString, String filePath) {
         var file = new File(filePath);
         var parentDir = file.getParentFile();
-        if (Optional.ofNullable(parentDir).map(File::exists).orElse(false)) {
+        if (parentDir != null && !parentDir.exists()) {
             parentDir.mkdirs();
         }
         try (FileOutputStream fos = new FileOutputStream(file)) {
