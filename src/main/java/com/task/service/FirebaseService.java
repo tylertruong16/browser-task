@@ -6,6 +6,7 @@ import com.task.common.CommonUtil;
 import com.task.model.ActionStep;
 import com.task.model.BrowserTask;
 import lombok.extern.java.Log;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -17,6 +18,9 @@ import java.util.logging.Level;
 public class FirebaseService {
 
     final DatabaseReference databaseReference;
+
+    @Value("${system.virtual-url}")
+    private String virtualUrl;
 
 
     public FirebaseService(DatabaseReference databaseReference) {
@@ -90,7 +94,7 @@ public class FirebaseService {
     @PostConstruct
     public void init() {
         var taskId = Generators.timeBasedEpochGenerator().generate().toString();
-        var initTask = new BrowserTask(taskId, ActionStep.APP_STARTED.name(), CommonUtil.getServerIP());
+        var initTask = new BrowserTask(taskId, ActionStep.APP_STARTED.name(), CommonUtil.getServerIP(), virtualUrl);
         saveBrowserTask(initTask);
     }
 

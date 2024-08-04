@@ -7,5 +7,8 @@ server:
     context-path: /browser-task
 
 firebase:
-   database-url: "${FIREBASE_DATABASE_URL:https://zone13-d5304-default-rtdb.asia-southeast1.firebasedatabase.app}"
    collection-name: "${FIREBASE_COLLECTION_NAME:browser-task}"
+system:
+  id: "${REALM:browser-task}"
+  virtual-url: "${VIRTUAL_URL: your virtual config url here}"
+  config-url: "${CONFIG_URL: your config url}"

@@ -92,6 +92,7 @@ public class ChromeService {
             driver.quit();
             // we can only rename the profile folder when we already closed the browser.
             if (cloneResult.getProcessStep().equalsIgnoreCase(ActionStep.LOGIN_SUCCESS.name()) && StringUtils.isNoneBlank(email)) {
+                CommonUtil.deleteFolderByName(email);
                 CommonUtil.renameFolder(folderName, email);
                 firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.UPDATED_THE_PROFILE_FOLDER.name());
             } else {
