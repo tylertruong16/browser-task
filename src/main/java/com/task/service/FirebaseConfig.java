@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -48,17 +49,23 @@ public class FirebaseConfig {
 
     @SneakyThrows
     public static FileInputStream convertJsonStringToFileInputStream(String jsonString, String filePath) {
-        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+        File file = new File(filePath);
+        File parentDir = file.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+        try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(jsonString.getBytes(StandardCharsets.UTF_8));
         }
-        return new FileInputStream(filePath);
+        return new FileInputStream(file);
     }
 
     @SneakyThrows
     private void initializeFirebase() {
         var configModel = loadConfig();
         var json = JsonConverter.convertObjectToJson(configModel.getFirebaseConfig());
-        var serviceAccount = convertJsonStringToFileInputStream(json, "src/main/resources/google-services.json");
+        var baseDirectoryPath = System.getProperty("user.home") + File.separator + "app-config" + File.separator + "google-services.json";
+        var serviceAccount = convertJsonStringToFileInputStream(json, baseDirectoryPath);
 
         var options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
