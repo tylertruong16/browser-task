@@ -1,8 +1,11 @@
 package com.task.service;
 
 import com.task.common.CommonUtil;
+import com.task.common.HttpUtil;
+import com.task.common.JsonConverter;
 import com.task.model.ActionStep;
 import com.task.model.BrowserTask;
+import com.task.model.ProfileItem;
 import com.task.model.TaskResult;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.SerializationUtils;
@@ -14,6 +17,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.FluentWait;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -32,6 +36,12 @@ public class ChromeService {
 
 
     final FirebaseService firebaseService;
+
+    @Value("${system.id}")
+    private String headerKey;
+
+    @Value("${system.profile-table-url}")
+    private String profileTableUrl;
 
     public ChromeService(FirebaseService firebaseService) {
         this.firebaseService = firebaseService;
@@ -64,7 +74,7 @@ public class ChromeService {
             preventCloseTab(driver);
 
             // check app can connect to login page by track the id identifierId
-
+            Thread.sleep(Duration.ofSeconds(5).toMillis());
             var loginFormStatus = canConnectLoginPage(driver) ? ActionStep.CONNECTED_LOGIN_FORM.name() : ActionStep.CAN_NOT_FIND_LOGIN_FORM.name();
             firebaseService.updateTaskStatus(task.getTaskId(), loginFormStatus);
             Thread.sleep(Duration.ofSeconds(10).toMillis());
@@ -94,6 +104,7 @@ public class ChromeService {
             if (cloneResult.getProcessStep().equalsIgnoreCase(ActionStep.LOGIN_SUCCESS.name()) && StringUtils.isNoneBlank(email)) {
                 CommonUtil.deleteFolderByName(email);
                 CommonUtil.renameFolder(folderName, email);
+                saveProfileDatabase(email);
                 firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.UPDATED_THE_PROFILE_FOLDER.name());
             } else {
                 CommonUtil.deleteFolderByName(folderName);
@@ -201,6 +212,19 @@ public class ChromeService {
             return matcher.group(1);
         }
         return "";
+    }
+
+
+    void saveProfileDatabase(String email) {
+        var header = HttpUtil.getHeaderPostRequest();
+        header.add("realm", headerKey);
+        var profile = ProfileItem.createOfflineProfile(email);
+        var json = JsonConverter.convertObjectToJson(profile);
+        var response = HttpUtil.sendPostRequest(profileTableUrl, json, header);
+        var body = response.getBody();
+        log.log(Level.INFO, "browser-task >> saveProfileDatabase >> header: {0} >> json: {1} >> url: {2} >> response: {3}",
+                new Object[]{headerKey, json, profileTableUrl, body});
+
     }
 
 

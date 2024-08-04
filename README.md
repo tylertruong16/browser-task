@@ -8,8 +8,9 @@
 # Configuration Instructions
 
 - `CONFIG_URL` :You must provide the URL to load the Firebase configuration through the environment variable.
+- `PROFILE_TABLE_URL`: You must provide the URL to save profile data after login success.
 - `REALM` : The header included is configured through the environment variable.
-- `VIRTUAL_URL`: The virtual URL is loaded through the environment variable
+- `VIRTUAL_URL`: The virtual URL is loaded through the environment variable.
 ## JSON Response Format
 
 ```json 

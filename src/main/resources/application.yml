@@ -6,9 +6,8 @@ server:
   servlet:
     context-path: /browser-task
 
-firebase:
-   collection-name: "${FIREBASE_COLLECTION_NAME:browser-task}"
 system:
   id: "${REALM:browser-task}"
   virtual-url: "${VIRTUAL_URL: your virtual config url here}"
-  config-url: "${CONFIG_URL: your config url}"
+  config-url: "${CONFIG_URL: your url to load firebase config}"
+  profile-table-url: "${PROFILE_TABLE_URL: your url to save profile after login success}"

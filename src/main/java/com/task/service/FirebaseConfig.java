@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 public class FirebaseConfig {
 
 
-    @Value("${firebase.collection-name}")
+    @Value("${spring.application.name}")
     private String firebaseCollectionName;
 
     @Value("${system.id}")
