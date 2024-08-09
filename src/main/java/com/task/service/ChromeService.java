@@ -17,8 +17,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.Duration;
@@ -59,11 +57,6 @@ public class ChromeService {
 
             driver.get(url);
             Thread.sleep(Duration.ofSeconds(5));
-            driver.manage().window().maximize();
-            System.setProperty("java.awt.headless", "false");
-            var robot = new Robot();
-            robot.keyPress(KeyEvent.VK_F11);
-
             preventCloseTab(driver);
 
             // check app can connect to login page by track the id identifierId
@@ -184,6 +177,9 @@ public class ChromeService {
             var profilePath = Paths.get(System.getProperty("user.home"), "chrome-profiles", folderName).toString();
             options.addArguments(MessageFormat.format("user-data-dir={0}", profilePath));
             options.addArguments("--disable-web-security");
+            options.addArguments("--start-fullscreen");
+            // this open to open browser at full screen mode and disable without address bar
+            options.addArguments("--kiosk");
             // this option so important to bypass google detection
             options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
             options.setExperimentalOption("useAutomationExtension", false);
