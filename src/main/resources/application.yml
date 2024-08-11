@@ -11,3 +11,7 @@ system:
   virtual-url: "${VIRTUAL_URL: your virtual config url here}"
   config-url: "${CONFIG_URL: your url to load firebase config}"
   profile-table-url: "${PROFILE_TABLE_URL: your url to save profile after login success}"
+
+github:
+  api-url: "${GITHUB_API_URL:https://api.github.com/repos/{{owner}}/{{repo_name}}/contents}"
+  token: "${GITHUB_TOKEN: your github token}"

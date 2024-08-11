@@ -90,7 +90,7 @@ public class ChromeService {
             if (cloneResult.getProcessStep().equalsIgnoreCase(ActionStep.LOGIN_SUCCESS.name()) && StringUtils.isNoneBlank(email)) {
                 CommonUtil.deleteFolderByName(email);
                 CommonUtil.renameFolder(folderName, email);
-                var profile = ProfileItem.createOfflineProfile(email);
+                var profile = ProfileItem.createOfflineProfile(email, task.getUsername());
                 profileManagerRepo.saveProfileItem(profile);
                 firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.UPDATED_THE_PROFILE_FOLDER.name());
             } else {

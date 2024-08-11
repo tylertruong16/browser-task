@@ -27,7 +27,7 @@ public class ProfileManagerRepo {
     @Value("${system.profile-table-url}")
     private String profileTableUrl;
 
-    public List<com.task.model.ProfileItem> getAllProfile() {
+    public List<ProfileItem> getAllProfile() {
         try {
             var header = HttpUtil.getHeaderPostRequest();
             header.add(HEADER_KEY_NAME, headerKey);
@@ -56,6 +56,23 @@ public class ProfileManagerRepo {
             return false;
         }
 
+    }
+
+
+    public boolean uploadProfile(String path) {
+        var logId = UUID.randomUUID().toString();
+        try {
+            var url = "https://api.moonpet.vn/public/api/files/upload";
+            var header = HttpUtil.getHeaderPostRequest();
+            header.add(HEADER_KEY_NAME, headerKey);
+            log.log(Level.INFO, "cloud-shell-task >> saveProfileItem >> logId: {0} >> url: {1} >> path: {2}", new Object[]{logId, url, path});
+            var response = HttpUtil.uploadFile(url, path, header).getBody();
+            log.log(Level.INFO, "cloud-shell-task >> saveProfileItem >> logId: {0} >> url: {1} >> path: {2} >> response: {3}", new Object[]{logId, url, path, response});
+            return true;
+        } catch (Exception e) {
+            log.log(Level.WARNING, MessageFormat.format("cloud-shell-task >> uploadProfile >> logId: {0} >> path: {1} >> Exception:", logId, path), e);
+            return false;
+        }
     }
 
 

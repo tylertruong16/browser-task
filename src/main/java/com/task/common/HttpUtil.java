@@ -8,6 +8,7 @@ import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
@@ -26,6 +27,7 @@ import org.apache.hc.core5.util.Timeout;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
+import java.io.File;
 import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -104,12 +106,26 @@ public class HttpUtil {
         }
     }
 
+
+    @SneakyThrows
+    public ResponseEntity<String> uploadFile(String path, String fileSource, HttpHeaders headers) {
+        var request = new HttpPost(path);
+        var file = new File(fileSource);
+        var multipartEntity = MultipartEntityBuilder.create()
+                .addBinaryBody("file", file, ContentType.DEFAULT_BINARY, file.getName())
+                .build();
+        request.setEntity(multipartEntity);
+        return sendRequest(path, request, headers);
+    }
+
     public ResponseEntity<String> sendPostRequest(String path, String json, HttpHeaders headers) {
         var request = new HttpPost(path);
         var entity = new StringEntity(json, ContentType.APPLICATION_JSON);
         request.setEntity(entity);
         return sendRequest(path, request, headers);
     }
+
+
 
     public static Map<String, String> getDefaultHeaderValue() {
         var result = new HashMap<String, String>();

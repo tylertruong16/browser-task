@@ -94,7 +94,7 @@ public class FirebaseService {
     @PostConstruct
     public void init() {
         var taskId = Generators.timeBasedEpochGenerator().generate().toString();
-        var initTask = new BrowserTask(taskId, ActionStep.APP_STARTED.name(), CommonUtil.getServerIP(), virtualUrl);
+        var initTask = new BrowserTask(taskId, ActionStep.APP_STARTED.name(), CommonUtil.getServerIP(), virtualUrl, "");
         saveBrowserTask(initTask);
     }
 
