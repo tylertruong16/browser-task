@@ -1,5 +1,6 @@
 package com.task.common;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
@@ -13,7 +14,6 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Optional;
-import java.util.function.ToIntBiFunction;
 
 @UtilityClass
 @Log
@@ -74,25 +74,20 @@ public class FileSplitter {
         var directory = partFileFolder.isDirectory() ? partFileFolder : partFileFolder.getParentFile();
         var fileName = new File(destinationFilePath).getName();
         var zipHint = fileName + ".part";
-        Comparator<File> nameComparator = (h1, h2) -> {
-            ToIntBiFunction<File, String> getPartNumber = (File f, String hint) -> NumberUtils.toInt(f.getName().replace(hint, ""), 0);
-            var h1Number = getPartNumber.applyAsInt(h1, zipHint);
-            var h2Number = getPartNumber.applyAsInt(h2, zipHint);
-            return h1Number - h2Number;
-        };
-        var arrayFiles = directory.listFiles((_, name) -> {
-            if (!Base64.isBase64(name)) {
-                return false;
-            }
-            var decode = new String(Base64.decodeBase64(name), StandardCharsets.UTF_8);
-            var oldFileName = AESUtil.decrypt(decode, KEY);
-            return oldFileName.startsWith(fileName) && oldFileName.contains(zipHint);
-        });
-        var partFiles = Arrays.stream(Optional.ofNullable(arrayFiles).orElse(new File[]{}))
-                .sorted(nameComparator).toArray(File[]::new);
+
+        var fileParts = Arrays.stream(Optional.ofNullable(directory.listFiles())
+                        .orElse(new File[]{}))
+                .filter(it -> Base64.isBase64(it.getName()))
+                .map(it -> {
+                    var name = it.getName();
+                    var decode = new String(Base64.decodeBase64(name), StandardCharsets.UTF_8);
+                    var oldFileName = AESUtil.decrypt(decode, KEY);
+                    return new FileNum(it, oldFileName, NumberUtils.toInt(oldFileName.replace(zipHint, ""), 0));
+                }).sorted(Comparator.comparing(FileNum::getNo)).toList();
+
         try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(destinationFilePath))) {
-            for (File partFile : partFiles) {
-                try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(partFile))) {
+            for (var partFile : fileParts) {
+                try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(partFile.getFile()))) {
                     byte[] buffer = new byte[8192];
                     int bytesRead;
                     while ((bytesRead = bis.read(buffer)) != -1) {
@@ -102,5 +97,15 @@ public class FileSplitter {
             }
         }
     }
+
+
+    @Data
+    @AllArgsConstructor
+    public static class FileNum {
+        private File file;
+        private String fileName;
+        private int no;
+    }
+
 
 }
