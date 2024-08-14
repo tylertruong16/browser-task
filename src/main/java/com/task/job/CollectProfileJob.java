@@ -45,7 +45,7 @@ public class CollectProfileJob {
     }
 
 
-    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.MINUTES)
     void collectProfile() {
         try {
             var accounts = profileManagerRepo.getAllProfile().stream().filter(ProfileItem::notUpdateProfileFolder)
@@ -81,7 +81,7 @@ public class CollectProfileJob {
         CommonUtil.deleteFolder(new File(baseDirectoryZipPath));
 
         var zipFileUrl = MessageFormat.format("{0}{1}{2}.zip", baseDirectoryZipPath, File.separator, email);
-        FileUtil.zipFolder(sourceFolder, zipFileUrl);
+        FileUtil.zipFiles(new String[]{sourceFolder}, zipFileUrl);
         var response = FileSplitter.splitFile(zipFileUrl, 10);
         log.log(Level.INFO, "browser-task >> CollectProfileJob >> zipProfiles >> logId: {0} >> response: {1}", new Object[]{logId, JsonConverter.convertObjectToJson(response)});
         CommonUtil.deleteFolder(new File(zipFileUrl));

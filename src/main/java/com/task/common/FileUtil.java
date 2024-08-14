@@ -12,14 +12,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.logging.Level;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @UtilityClass
 @Log
 public class FileUtil {
 
-    public static void zipFolder(String sourceFolder, String zipFile) throws IOException {
-        File zipFilePath = new File(zipFile);
-        File parentDir = zipFilePath.getParentFile();
+
+    public static void zipFiles(String[] srcFiles, String zipFile) throws IOException {
+        var zipFilePath = new File(zipFile);
+        var parentDir = zipFilePath.getParentFile();
         if (parentDir != null && !parentDir.exists()) {
             if (parentDir.mkdirs()) {
                 log.log(Level.WARNING, "browser-task >> FileUtil >> zipFolder >> Created missing directories: {0}", parentDir.getAbsolutePath());
@@ -28,15 +31,46 @@ public class FileUtil {
                 return;
             }
         }
-        FileOutputStream fos = new FileOutputStream(zipFile);
-        ZipArchiveOutputStream zos = new ZipArchiveOutputStream(fos);
+        try (var fos = new FileOutputStream(zipFile);
+             var zos = new ZipOutputStream(fos)) {
 
-        File folder = new File(sourceFolder);
-        zipFiles(folder, folder.getName(), zos);
+            for (var srcFile : srcFiles) {
+                var fileToZip = new File(srcFile);
+                zipFile(fileToZip, fileToZip.getName(), zos);
+            }
+        }
+    }
 
-        zos.finish();
-        zos.close();
-        fos.close();
+    private static void zipFile(File fileToZip, String fileName, ZipOutputStream zos) throws IOException {
+        if (fileToZip.isHidden()) {
+            log.log(Level.WARNING, "browser-task >> FileUtil >> zipFolder >> folder hidden: {0}", fileToZip.getAbsolutePath());
+            return;
+        }
+        if (fileToZip.isDirectory()) {
+            if (fileName.endsWith("/")) {
+                zos.putNextEntry(new ZipEntry(fileName));
+                zos.closeEntry();
+            } else {
+                zos.putNextEntry(new ZipEntry(fileName + "/"));
+                zos.closeEntry();
+            }
+            var children = fileToZip.listFiles();
+            if (children != null) {
+                for (var childFile : children) {
+                    zipFile(childFile, fileName + "/" + childFile.getName(), zos);
+                }
+            }
+            return;
+        }
+        try (var fis = new FileInputStream(fileToZip)) {
+            var zipEntry = new ZipEntry(fileName);
+            zos.putNextEntry(zipEntry);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                zos.write(buffer, 0, length);
+            }
+        }
     }
 
     private static void zipFiles(File fileToZip, String parentFolder, ZipArchiveOutputStream zos) throws IOException {
