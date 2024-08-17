@@ -28,11 +28,15 @@ public class ProfileItem implements Serializable {
     public static ProfileItem createOfflineProfile(String email, String username) {
         var updateAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
         var id = new String(Base64.getEncoder().encode(email.getBytes(StandardCharsets.UTF_8)));
-        return new ProfileItem(id, email, "OFFLINE", updateAt, "", username);
+        return new ProfileItem(id, email, ProfileStatus.OFFLINE.name(), updateAt, "", username);
     }
 
     public boolean notUpdateProfileFolder() {
-        return StringUtils.isBlank(this.getProfileFolderUrl()) && StringUtils.isNoneBlank(this.getUpdateDate());
+        return StringUtils.isBlank(this.getProfileFolderUrl()) && StringUtils.isNoneBlank(this.getUpdateDate()) && !accountLostSession();
+    }
+
+    public boolean accountLostSession() {
+        return ProfileStatus.LOST_CONNECTION.name().equals(this.getStatus());
     }
 
     public ZonedDateTime parseUpdateDate() {
