@@ -5,7 +5,6 @@ import com.task.model.ActionStep;
 import com.task.model.BrowserTask;
 import com.task.model.ProfileItem;
 import com.task.model.TaskResult;
-import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +42,6 @@ public class ChromeService {
         return accessGoogle(data);
     }
 
-    @SneakyThrows
     public TaskResult accessGoogle(BrowserTask task) {
         var folderName = UUID.randomUUID().toString();
         var result = new TaskResult(task, null);
@@ -89,7 +87,6 @@ public class ChromeService {
         } finally {
             driver.quit();
             // we can only rename the profile folder when we already closed the browser.
-            Thread.sleep(Duration.ofSeconds(5).toMillis());
             if (cloneResult.getProcessStep().equalsIgnoreCase(ActionStep.LOGIN_SUCCESS.name()) && StringUtils.isNoneBlank(email)) {
                 CommonUtil.deleteFolderByName(email);
                 CommonUtil.renameFolder(folderName, email);

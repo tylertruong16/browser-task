@@ -72,7 +72,7 @@ public class CollectProfileJob {
         var email = item.getEmail();
         // s1: zip file to folder user.home\zip-chrome-profiles\xxx.zip
         var baseDirectoryPath = System.getProperty("user.home") + File.separator + "chrome-profiles";
-        var sourceFolder = MessageFormat.format("{0}{1}{2}{3}{4}", baseDirectoryPath, File.separator, email, File.separator, "Default");
+        var sourceFolder = MessageFormat.format("{0}{1}{2}", baseDirectoryPath, File.separator, email);
         var baseDirectoryZipPath = System.getProperty("user.home") + File.separator + "zip-chrome-profiles" + File.separator + email;
         if (!new File(sourceFolder).exists()) {
             log.log(Level.INFO, "browser-task >> CollectProfileJob >> zipProfiles >> folder profile not exist: {0}", sourceFolder);
