@@ -67,11 +67,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.firebase</groupId>
-            <artifactId>firebase-admin</artifactId>
-            <version>9.3.0</version>
-        </dependency>
 
         <dependency>
             <groupId>com.fasterxml.uuid</groupId>
@@ -103,10 +98,6 @@
             <artifactId>bcprov-jdk18on</artifactId>
             <version>1.78.1</version>
         </dependency>
-
-
-
-
 
 
     </dependencies>

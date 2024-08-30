@@ -5,6 +5,7 @@ import com.task.model.ActionStep;
 import com.task.model.BrowserTask;
 import com.task.model.ProfileItem;
 import com.task.model.TaskResult;
+import com.task.repo.ProfileManagerRepo;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.SerializationUtils;
@@ -31,11 +32,11 @@ import java.util.regex.Pattern;
 public class ChromeService {
 
 
-    final FirebaseService firebaseService;
+    final AppStoreService appStoreService;
     final ProfileManagerRepo profileManagerRepo;
 
-    public ChromeService(FirebaseService firebaseService, ProfileManagerRepo profileManagerRepo) {
-        this.firebaseService = firebaseService;
+    public ChromeService(AppStoreService appStoreService, ProfileManagerRepo profileManagerRepo) {
+        this.appStoreService = appStoreService;
         this.profileManagerRepo = profileManagerRepo;
     }
 
@@ -64,7 +65,7 @@ public class ChromeService {
             // check app can connect to login page by track the id identifierId
             Thread.sleep(Duration.ofSeconds(5).toMillis());
             var loginFormStatus = canConnectLoginPage(driver) ? ActionStep.CONNECTED_LOGIN_FORM.name() : ActionStep.CAN_NOT_FIND_LOGIN_FORM.name();
-            firebaseService.updateTaskStatus(task.getTaskId(), loginFormStatus);
+            appStoreService.updateTaskStatus(task.getTaskId(), loginFormStatus);
             Thread.sleep(Duration.ofSeconds(10).toMillis());
             var isSignedIn = loginSuccess(driver);
 
@@ -75,17 +76,17 @@ public class ChromeService {
                     throw new IllegalArgumentException("can not extract email");
                 }
                 log.log(Level.INFO, "browser-task >> ChromeService >> accessGoogle >> email: {0}", email);
-                firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_SUCCESS.name());
+                appStoreService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_SUCCESS.name());
                 cloneResult.setProcessStep(ActionStep.LOGIN_SUCCESS.name());
             } else {
                 log.log(Level.SEVERE, "browser-task >> ChromeService >> accessGoogle >> No Google account is logged in.");
                 cloneResult.setProcessStep(ActionStep.LOGIN_FAILURE.name());
-                firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_FAILURE.name());
+                appStoreService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_FAILURE.name());
             }
         } catch (Exception e) {
             log.log(Level.WARNING, "browser-task >> ChromeService >> accessGoogle >> Exception:", e);
             cloneResult.setProcessStep(ActionStep.LOGIN_FAILURE.name());
-            firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_FAILURE.name());
+            appStoreService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_FAILURE.name());
         } finally {
             driver.quit();
             // we can only rename the profile folder when we already closed the browser.
@@ -94,8 +95,9 @@ public class ChromeService {
                 CommonUtil.deleteFolderByName(email);
                 CommonUtil.renameFolder(folderName, email);
                 var profile = ProfileItem.createOfflineProfile(email, task.getUsername());
-                profileManagerRepo.saveProfileItem(profile);
-                firebaseService.updateTaskStatus(task.getTaskId(), ActionStep.UPDATED_THE_PROFILE_FOLDER.name());
+                var saveSuccess = profileManagerRepo.saveProfileItem(profile);
+                log.log(Level.INFO, "browser-task >> ChromeService >> accessGoogle >> saveProfileItem >> response: {0}", saveSuccess);
+                appStoreService.updateTaskStatus(task.getTaskId(), ActionStep.UPDATED_THE_PROFILE_FOLDER.name());
             } else {
                 CommonUtil.deleteFolderByName(folderName);
             }

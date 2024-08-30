@@ -13,11 +13,13 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 public class BrowserTask implements Serializable {
 
+    private String id;
     private String taskId;
     private String processStep = ActionStep.APP_STARTED.name();
     private String serverIp = "";
     private String virtualUrl = "";
-    private String username;
+    private String username = "";
+    private boolean deleted = false;
 
     public boolean newTask() {
         return Stream.of(ActionStep.APP_STARTED, ActionStep.CONNECT_GOOGLE)
