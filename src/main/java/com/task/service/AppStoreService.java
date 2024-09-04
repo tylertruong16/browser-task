@@ -3,11 +3,13 @@ package com.task.service;
 import com.fasterxml.uuid.Generators;
 import com.task.common.CommonUtil;
 import com.task.model.ActionStep;
+import com.task.model.AppId;
 import com.task.model.BrowserTask;
 import com.task.repo.BrowserTaskRepo;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.java.Log;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,9 @@ import java.time.format.DateTimeFormatter;
 @Service
 @Log
 public class AppStoreService {
+
+    @Autowired
+    AppId appId;
 
 
     @Value("${system.virtual-url}")
@@ -46,7 +51,7 @@ public class AppStoreService {
 
     @PostConstruct
     public void init() {
-        var taskId = Generators.timeBasedEpochGenerator().generate().toString();
+        var taskId = appId.getId();
         var updateAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
         var initTask = new BrowserTask(taskId,
                 taskId,
@@ -54,7 +59,7 @@ public class AppStoreService {
                 CommonUtil.getServerIP(),
                 virtualUrl,
                 "",
-                false, updateAt);
+                false, updateAt, updateAt);
         saveBrowserTask(initTask);
     }
 

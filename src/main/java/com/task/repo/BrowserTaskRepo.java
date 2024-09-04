@@ -6,6 +6,7 @@ import com.task.model.BrowserTask;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -53,8 +54,16 @@ public class BrowserTaskRepo {
     public List<BrowserTask> getBrowserTaskById(String id) {
         var logId = UUID.randomUUID().toString();
         var tableUrl = MessageFormat.format("{0}/browser-task", databaseJsonUrl);
-        var param = MessageFormat.format("search?filters=id::::{0}", id);
-        var url = MessageFormat.format("{0}/{1}", tableUrl, param);
+        var param = StringUtils.isNoneBlank(id) ? MessageFormat.format("/search?filters=id::::{0}", id) : "";
+        var url = MessageFormat.format("{0}{1}", tableUrl, param);
+        return getBrowserTasks(url, logId);
+    }
+
+    public List<BrowserTask> getBrowserTaskNotDeleted() {
+        var logId = UUID.randomUUID().toString();
+        var tableUrl = MessageFormat.format("{0}/browser-task", databaseJsonUrl);
+        var param = MessageFormat.format("/search?filters=deleted::::{0}", false);
+        var url = MessageFormat.format("{0}{1}", tableUrl, param);
         return getBrowserTasks(url, logId);
     }
 
@@ -62,15 +71,13 @@ public class BrowserTaskRepo {
         try {
             var header = HttpUtil.getHeaderPostRequest();
             header.add(HEADER_KEY_NAME, headerKey);
-            log.log(Level.INFO, "browser-task >> saveBrowserTask >> url: {0} >> logId: {1}", new Object[]{url, logId});
             var response = HttpUtil.sendRequest(url, header).getBody();
-            log.log(Level.INFO, "browser-task >> saveBrowserTask >> url: {0} >> logId: {1} >> response: {2}", new Object[]{url, logId, response});
             var jsonObject = new JSONObject(response);
             var data = jsonObject.getJSONArray("data").toString();
             return Arrays.stream(JsonConverter.convertToObject(data, BrowserTask[].class)
                     .orElse(new BrowserTask[]{})).toList();
         } catch (Exception e) {
-            log.log(Level.WARNING, MessageFormat.format("browser-task >> getBrowserTaskById >> logId: {0} >> url: {1} >> Exception:", logId, url), e);
+            log.log(Level.WARNING, MessageFormat.format("browser-task >> getBrowserTasks >> logId: {0} >> url: {1} >> Exception:", logId, url), e);
             return new ArrayList<>();
         }
     }

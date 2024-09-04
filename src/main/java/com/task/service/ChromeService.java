@@ -88,6 +88,7 @@ public class ChromeService {
             cloneResult.setProcessStep(ActionStep.LOGIN_FAILURE.name());
             appStoreService.updateTaskStatus(task.getTaskId(), ActionStep.LOGIN_FAILURE.name());
         } finally {
+            Thread.sleep(Duration.ofSeconds(15).toMillis());
             driver.quit();
             // we can only rename the profile folder when we already closed the browser.
             Thread.sleep(Duration.ofSeconds(5).toMillis());
