@@ -45,7 +45,7 @@ public class CollectProfileJob {
     }
 
 
-    @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
     void collectProfile() {
         try {
             var accounts = profileManagerRepo.getAllProfile().stream().filter(ProfileItem::notUpdateProfileFolder)

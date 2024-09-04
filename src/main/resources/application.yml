@@ -1,6 +1,13 @@
 spring:
   application:
     name: browser-task
+  task:
+    scheduling:
+      pool:
+        size: 10
+    execution:
+      pool:
+        core-size: 64
 server:
   port: 7171
   servlet:
@@ -9,9 +16,10 @@ server:
 system:
   id: "${REALM:browser-task}"
   virtual-url: "${VIRTUAL_URL: your virtual config url here}"
-  database-json-url: "${DATABASE_JSON_URL: your url to save profile after login success}"
-  socket-url: "${SOCKET_URL: your websocket url}"
+  database-json-url: "${DATABASE_JSON_URL:***onpet.vn/public/api/dynamic/table}"
+  socket-url: "${SOCKET_URL:***moonpet.vn/ws}"
   socket-destination: "${SOCKET_DESTINATION:/topic/messages/browser-task}"
+  socket-push-url: "${SOCKET_PUSH_URL:***/api/notification/push}"
 
 github:
   api-url: "${GITHUB_API_URL:https://api.github.com/repos/{{owner}}/{{repo_name}}/contents}"

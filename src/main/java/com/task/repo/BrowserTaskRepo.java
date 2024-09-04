@@ -28,6 +28,9 @@ public class BrowserTaskRepo {
     @Value("${system.database-json-url}")
     private String databaseJsonUrl;
 
+    @Value("${system.socket-push-url}")
+    private String socketPushUrl;
+
     public boolean saveBrowserTask(BrowserTask item) {
         var logId = UUID.randomUUID().toString();
         var json = JsonConverter.convertObjectToJson(item);
@@ -72,6 +75,22 @@ public class BrowserTaskRepo {
         }
     }
 
+    public void pushTaskToSocket(BrowserTask item) {
+        var logId = UUID.randomUUID().toString();
+        var json = JsonConverter.convertObjectToJson(item);
+        try {
+            var url = socketPushUrl;
+            var header = HttpUtil.getHeaderPostRequest();
+            header.add(HEADER_KEY_NAME, item.getTaskId());
+            log.log(Level.INFO, "browser-task >> pushTaskToSocket >> json: {0} >> logId: {1}", new Object[]{JsonConverter.convertObjectToJson(item), logId});
+            var response = HttpUtil.sendPostRequest(url, json, header).getBody();
+            log.log(Level.INFO, "browser-task >> pushTaskToSocket >> json: {0} >> logId: {1} >> response: {2}", new Object[]{JsonConverter.convertObjectToJson(item), logId, response});
+
+        } catch (Exception e) {
+            log.log(Level.WARNING, MessageFormat.format("browser-task >> pushTaskToSocket >> logId: {0} >> json: {1} >> Exception:", logId, json), e);
+        }
+    }
+
     public void updateTaskStatus(String taskId, String status) {
         var logId = UUID.randomUUID().toString();
         var tasks = getBrowserTaskById(taskId);
@@ -80,6 +99,7 @@ public class BrowserTaskRepo {
                 var clone = SerializationUtils.clone(it);
                 clone.setProcessStep(status);
                 saveBrowserTask(clone);
+                pushTaskToSocket(clone);
             });
 
         } else {
@@ -98,6 +118,7 @@ public class BrowserTaskRepo {
                 var clone = SerializationUtils.clone(it);
                 clone.setDeleted(true);
                 saveBrowserTask(clone);
+                pushTaskToSocket(clone);
             });
 
         } else {

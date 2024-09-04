@@ -11,6 +11,9 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+
 @Service
 @Log
 public class AppStoreService {
@@ -32,7 +35,7 @@ public class AppStoreService {
 
 
     public void saveBrowserTask(BrowserTask browserTask) {
-        var response = browserTaskRepo.saveBrowserTask(browserTask);
+        browserTaskRepo.saveBrowserTask(browserTask);
     }
 
 
@@ -44,13 +47,14 @@ public class AppStoreService {
     @PostConstruct
     public void init() {
         var taskId = Generators.timeBasedEpochGenerator().generate().toString();
+        var updateAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
         var initTask = new BrowserTask(taskId,
                 taskId,
                 ActionStep.APP_STARTED.name(),
                 CommonUtil.getServerIP(),
                 virtualUrl,
                 "",
-                false);
+                false, updateAt);
         saveBrowserTask(initTask);
     }
 

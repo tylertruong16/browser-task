@@ -20,6 +20,7 @@ public class BrowserTask implements Serializable {
     private String virtualUrl = "";
     private String username = "";
     private boolean deleted = false;
+    private String createdAt = "";
 
     public boolean newTask() {
         return Stream.of(ActionStep.APP_STARTED, ActionStep.CONNECT_GOOGLE)

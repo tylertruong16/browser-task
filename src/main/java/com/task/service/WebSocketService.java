@@ -6,10 +6,12 @@ import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.messaging.converter.StringMessageConverter;
 import org.springframework.messaging.simp.stomp.*;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,6 @@ import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -39,7 +40,13 @@ public class WebSocketService {
 
 
     @PostConstruct
-    public void socketConnect() throws Exception {
+    void init() {
+        socketConnect();
+    }
+
+
+    @SneakyThrows
+    public void socketConnect() {
         // Create WebSocket client
         WebSocketClient webSocketClient = new StandardWebSocketClient();
 
@@ -57,11 +64,6 @@ public class WebSocketService {
         // Connect to the SockJS server
         log.log(Level.INFO, "browser-task >> WebSocketService >> socketConnect >> url: {0} >> destination: {1}", new Object[]{socketUrl, socketDestination});
         stompClient.connectAsync(socketUrl, new WebSocketHttpHeaders(), sessionHandler).get();
-
-        // Keep the application running to listen for messages indefinitely
-        synchronized (WebSocketService.class) {
-            WebSocketService.class.wait(); // This keeps the thread alive indefinitely
-        }
     }
 
     @Log
@@ -72,30 +74,32 @@ public class WebSocketService {
 
 
         @Override
-        public void handleFrame(StompHeaders headers, Object payload) {
+        public void handleFrame(@NonNull StompHeaders headers, Object payload) {
             log.log(Level.INFO, "browser-task >> MyStompSessionHandler >> receivedMessage: {0}", payload);
             var json = String.valueOf(payload);
             var wrapper = JsonConverter.convertToObject(json, MessageMapper.class)
                     .orElse(new MessageMapper());
             var message = wrapper.getMessage();
-            var browserTasks = Arrays.stream(JsonConverter.convertToObject(message, BrowserTask[].class).orElse(new BrowserTask[]{})).toList();
+            var browserTasks = JsonConverter.convertToObject(message, BrowserTask.class).orElse(new BrowserTask());
             log.log(Level.INFO, "browser-task >> MyStompSessionHandler >> browserTasks: {0}", JsonConverter.convertListToJson(browserTasks));
-            browserTasks.forEach(it -> taskQueue.pushTask(it));
+            if (StringUtils.isNoneBlank(browserTasks.getTaskId())) {
+                taskQueue.pushTask(browserTasks);
+            }
         }
 
         @Override
-        public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+        public void afterConnected(StompSession session, @NonNull StompHeaders connectedHeaders) {
             log.log(Level.INFO, "browser-task >> MyStompSessionHandler >> afterConnected >> Connected");
             session.subscribe(socketDestination, this);
         }
 
         @Override
-        public void handleException(StompSession session, StompCommand command, StompHeaders headers, byte[] payload, Throwable exception) {
+        public void handleException(@NonNull StompSession session, StompCommand command, @NonNull StompHeaders headers, @NonNull byte[] payload, @NonNull Throwable exception) {
             log.log(Level.SEVERE, "browser-task >> MyStompSessionHandler >> handleException >> Throwable:", exception);
         }
 
         @Override
-        public void handleTransportError(StompSession session, Throwable exception) {
+        public void handleTransportError(@NonNull StompSession session, @NonNull Throwable exception) {
             log.log(Level.SEVERE, "browser-task >> MyStompSessionHandler >> handleTransportError >> Throwable:", exception);
         }
     }
