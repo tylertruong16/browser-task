@@ -23,6 +23,8 @@ import org.springframework.web.socket.sockjs.client.SockJsClient;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 @Service
@@ -60,7 +62,7 @@ public class WebSocketService {
 
         // Connect to SockJS endpoint
         var destination = StringUtils.defaultIfBlank(socketDestination, "").trim();
-        StompSessionHandler sessionHandler = new MyStompSessionHandler(destination, taskQueue);
+        StompSessionHandler sessionHandler = new MyStompSessionHandler(destination, taskQueue, stompClient, socketUrl);
         // Connect to the SockJS server
         log.log(Level.INFO, "browser-task >> WebSocketService >> socketConnect >> url: {0} >> destination: {1}", new Object[]{socketUrl, socketDestination});
         stompClient.connectAsync(socketUrl, new WebSocketHttpHeaders(), sessionHandler).get();
@@ -71,6 +73,8 @@ public class WebSocketService {
     static class MyStompSessionHandler extends StompSessionHandlerAdapter {
         private String socketDestination;
         private TaskQueue taskQueue;
+        private WebSocketStompClient stompClient;
+        private String socketUrl;
 
 
         @Override
@@ -101,6 +105,17 @@ public class WebSocketService {
         @Override
         public void handleTransportError(@NonNull StompSession session, @NonNull Throwable exception) {
             log.log(Level.SEVERE, "browser-task >> MyStompSessionHandler >> handleTransportError >> Throwable:", exception);
+
+            // Attempt to reconnect on connection loss
+            if (exception instanceof ConnectionLostException) {
+                try {
+                    log.log(Level.WARNING, "browser-task >> MyStompSessionHandler >> Connection lost, attempting to reconnect...");
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(3));  // Wait before reconnecting
+                    stompClient.connectAsync(socketUrl, new WebSocketHttpHeaders(), this).get();
+                } catch (InterruptedException | ExecutionException e) {
+                    log.log(Level.SEVERE, "browser-task >> MyStompSessionHandler >> Reconnection failed:", e);
+                }
+            }
         }
     }
 
