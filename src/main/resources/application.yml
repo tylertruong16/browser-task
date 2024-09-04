@@ -10,6 +10,8 @@ system:
   id: "${REALM:browser-task}"
   virtual-url: "${VIRTUAL_URL: your virtual config url here}"
   database-json-url: "${DATABASE_JSON_URL: your url to save profile after login success}"
+  socket-url: "${SOCKET_URL: your websocket url}"
+  socket-destination: "${SOCKET_DESTINATION:/topic/messages/browser-task}"
 
 github:
   api-url: "${GITHUB_API_URL:https://api.github.com/repos/{{owner}}/{{repo_name}}/contents}"

@@ -1,11 +1,14 @@
 package com.task.service;
 
+import com.task.common.CommonUtil;
+import com.task.common.JsonConverter;
 import com.task.model.BrowserTask;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -44,15 +47,14 @@ public class TaskQueue {
                 Thread.currentThread().interrupt();
             }
         });
-        subscribeToChanges();
     }
 
-    private void subscribeToChanges() {
-//        if (task.newTask() && StringUtils.equalsIgnoreCase(task.getServerIp(), CommonUtil.getServerIP())) {
-//            // push to handle task
-//            log.log(Level.INFO, "browser-task >> FirebaseService >> task: {0}", JsonConverter.convertObjectToJson(task));
-//            queue.add(task);
-//        }
+    public void pushTask(BrowserTask task) {
+        if (task.newTask() && StringUtils.equalsIgnoreCase(task.getServerIp(), CommonUtil.getServerIP())) {
+            // push to handle task
+            log.log(Level.INFO, "browser-task >> FirebaseService >> task: {0}", JsonConverter.convertObjectToJson(task));
+            queue.add(task);
+        }
     }
 
     public void handleBrowserTask(BrowserTask browserTask) {
