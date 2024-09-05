@@ -1,20 +1,16 @@
 package com.task.service;
 
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ValueEventListener;
 import com.task.common.CommonUtil;
 import com.task.common.JsonConverter;
 import com.task.model.BrowserTask;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -27,18 +23,16 @@ import java.util.logging.Level;
 public class TaskQueue {
 
 
-    final DatabaseReference databaseReference;
     private volatile boolean alive = true;
     final ChromeService chromeService;
-    final FirebaseService firebaseService;
+    final AppStoreService appStoreService;
 
     @Getter
     final BlockingQueue<BrowserTask> queue = new LinkedBlockingDeque<>();
 
-    public TaskQueue(DatabaseReference databaseReference, ChromeService chromeService, FirebaseService firebaseService) {
-        this.databaseReference = databaseReference;
+    public TaskQueue(ChromeService chromeService, AppStoreService appStoreService) {
         this.chromeService = chromeService;
-        this.firebaseService = firebaseService;
+        this.appStoreService = appStoreService;
     }
 
     @PostConstruct
@@ -53,28 +47,14 @@ public class TaskQueue {
                 Thread.currentThread().interrupt();
             }
         });
-        subscribeToChanges();
     }
 
-    private void subscribeToChanges() {
-        databaseReference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                    var task = Optional.ofNullable(ds.getValue(BrowserTask.class)).orElse(new BrowserTask());
-                    if (task.newTask() && StringUtils.equalsIgnoreCase(task.getServerIp(), CommonUtil.getServerIP())) {
-                        // push to handle task
-                        log.log(Level.INFO, "browser-task >> FirebaseService >> task: {0}", JsonConverter.convertObjectToJson(task));
-                        queue.add(task);
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                log.log(Level.WARNING, "browser-task >> FirebaseService >> subscribeToChanges >> onCancelled >> Exception:", databaseError.toException());
-            }
-        });
+    public void pushTask(BrowserTask task) {
+        if (task.newTask() && StringUtils.equalsIgnoreCase(task.getServerIp(), CommonUtil.getServerIP())) {
+            // push to handle task
+            log.log(Level.INFO, "browser-task >> FirebaseService >> task: {0}", JsonConverter.convertObjectToJson(task));
+            queue.add(task);
+        }
     }
 
     public void handleBrowserTask(BrowserTask browserTask) {
@@ -87,7 +67,7 @@ public class TaskQueue {
         } finally {
             if (CollectionUtils.isNotEmpty(result)) {
                 var first = result.getFirst();
-                firebaseService.saveBrowserTask(first);
+                appStoreService.saveBrowserTask(first);
             }
 
         }

@@ -1,4 +1,4 @@
-package com.task.service;
+package com.task.repo;
 
 
 import com.task.common.HttpUtil;
@@ -24,14 +24,15 @@ public class ProfileManagerRepo {
 
     @Value("${system.id}")
     private String headerKey;
-    @Value("${system.profile-table-url}")
-    private String profileTableUrl;
+    @Value("${system.database-json-url}")
+    private String databaseJsonUrl;
 
     public List<ProfileItem> getAllProfile() {
         try {
+            var tableUrl = MessageFormat.format("{0}/profile_manager", databaseJsonUrl);
             var header = HttpUtil.getHeaderPostRequest();
             header.add(HEADER_KEY_NAME, headerKey);
-            var response = HttpUtil.sendRequest(profileTableUrl, header).getBody();
+            var response = HttpUtil.sendRequest(tableUrl, header).getBody();
             return Arrays.stream(JsonConverter.convertToObject(response, ProfileItem[].class).orElse(new ProfileItem[]{})).toList();
         } catch (Exception e) {
             log.log(Level.WARNING, "cloud-shell-task >> getAllProfile >> Exception:", e);
@@ -43,7 +44,8 @@ public class ProfileManagerRepo {
         var logId = UUID.randomUUID().toString();
         var json = JsonConverter.convertObjectToJson(profileItem);
         try {
-            var url = MessageFormat.format("{0}/{1}", profileTableUrl, "insert");
+            var tableUrl = MessageFormat.format("{0}/profile_manager", databaseJsonUrl);
+            var url = MessageFormat.format("{0}/{1}", tableUrl, "insert");
             var header = HttpUtil.getHeaderPostRequest();
             header.add(HEADER_KEY_NAME, headerKey);
             log.log(Level.INFO, "cloud-shell-task >> saveProfileItem >> json: {0} >> logId: {1}", new Object[]{JsonConverter.convertObjectToJson(profileItem), logId});
@@ -55,8 +57,8 @@ public class ProfileManagerRepo {
             log.log(Level.WARNING, MessageFormat.format("cloud-shell-task >> saveProfileItem >> logId: {0} >> json: {1} >> Exception:", logId, json), e);
             return false;
         }
-
     }
+
 
 
 }

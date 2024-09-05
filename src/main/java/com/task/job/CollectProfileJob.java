@@ -8,7 +8,7 @@ import com.task.github.GitHubService;
 import com.task.github.model.ContentResponse;
 import com.task.github.model.GitHubConfig;
 import com.task.model.ProfileItem;
-import com.task.service.ProfileManagerRepo;
+import com.task.repo.ProfileManagerRepo;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
@@ -45,7 +45,7 @@ public class CollectProfileJob {
     }
 
 
-    @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
     void collectProfile() {
         try {
             var accounts = profileManagerRepo.getAllProfile().stream().filter(ProfileItem::notUpdateProfileFolder)

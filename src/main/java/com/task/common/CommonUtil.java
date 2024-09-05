@@ -8,6 +8,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.text.MessageFormat;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -74,6 +78,18 @@ public class CommonUtil {
         var baseDirectoryPath = System.getProperty("user.home") + File.separator + "chrome-profiles";
         var folder = new File(baseDirectoryPath + File.separator + folderName);
         return deleteFolder(folder);
+    }
+
+    public boolean isMoreThan30MinutesAhead(String timestamp) {
+        try {
+            var inputDateTime = OffsetDateTime.parse(timestamp, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            var now = OffsetDateTime.now(ZoneOffset.UTC);
+            Duration duration = Duration.between(inputDateTime, now);
+            return duration.toMinutes() > 30;
+        } catch (Exception e) {
+            log.log(Level.WARNING, MessageFormat.format("browser-task >> CommonUtil >> isMoreThan30MinutesAhead >> input: {0} >> Exception:", timestamp), e);
+            return false;
+        }
     }
 
 }
