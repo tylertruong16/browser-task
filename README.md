@@ -11,18 +11,6 @@
 - `PROFILE_TABLE_URL`: You must provide the URL to save profile data after login success. For example: `https://xxx/table/profile_manager`.
 - `REALM` : The header included is configured through the environment variable.
 - `VIRTUAL_URL`: The virtual URL is loaded through the environment variable.
-## JSON Response Format
-
-```json 
-{
-  "id": "xxx",
-  "firebaseConfig": { 
-    
-  },
-  "firebaseUrl": "your firebase database URL"
-} 
-```
-
 
 ## Example Usage
 
